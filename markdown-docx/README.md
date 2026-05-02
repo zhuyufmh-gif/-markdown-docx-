@@ -27,6 +27,7 @@
 | `legacy_format_rules.py` | 论文段落、标题、图表等格式规则 |
 | `dhu_template_schema.json` | 模板锚点和封面字段配置 |
 | `outputs/dhu_undergrad_clean_template.docx` | 默认使用的干净 Word 母版 |
+| `docs/核心机制.md` | 项目核心机制说明 |
 | `docs/Markdown书写规则.md` | Markdown 输入规范 |
 
 ## 安装依赖
