@@ -1,0 +1,45 @@
+{
+  "anchors": {
+    "cn_abstract": "^摘\\s*要$",
+    "cn_keywords": "^关键词\\s*[：:]",
+    "en_abstract": "^ABSTRACT$",
+    "en_keywords": "^KEY\\s*WORDS?\\s*[：:]",
+    "toc": "^目\\s*录$",
+    "body_start": "^1\\s+(绪论|正文一级标题)$",
+    "reference": "^参考文献$",
+    "appendix": "^附录$",
+    "acknowledgements": "^致谢$",
+    "foreign_translation": "^外文原文及译文$"
+  },
+  "cover_fields": {
+    "college": "学 院",
+    "major": "专 业",
+    "author": "姓 名",
+    "student_id": "学 号",
+    "supervisor": "指 导 教 师",
+    "submit_date": "提 交 日 期"
+  },
+  "clean_placeholders": {
+    "cover_cn_title": "论文中文题目占位",
+    "cover_en_title": "ENGLISH TITLE PLACEHOLDER",
+    "front_cn_title": "论文中文题目占位",
+    "front_en_title_lines": [
+      "ENGLISH TITLE PLACEHOLDER",
+      "",
+      ""
+    ],
+    "cn_abstract_body": "",
+    "cn_keywords": "关键词：",
+    "en_abstract_body": "",
+    "en_keywords": "KEY WORDS:",
+    "toc_body": "",
+    "body_h1": "1  正文一级标题",
+    "body_h2": "1.1 正文二级标题",
+    "body_h3": "1.1.1 正文三级标题",
+    "body_text": "",
+    "reference_item": "",
+    "appendix_body": "",
+    "acknowledgements_body": "",
+    "foreign_translation_body": ""
+  }
+}
