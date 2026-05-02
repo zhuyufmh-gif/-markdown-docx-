@@ -48,12 +48,22 @@ class PaperContent:
 
 def clean_heading(text: str) -> str:
     text = re.sub(r"^#{1,6}\s*", "", text).strip()
+    text = _strip_inline_markdown(text)
     text = re.sub(r"^[一二三四五六七八九十]+\s*[、.]\s*", "", text)
     text = re.sub(r"^第[一二三四五六七八九十百]+章\s*", "", text)
     text = re.sub(r"^（[一二三四五六七八九十]+）\s*", "", text)
     text = re.sub(r"^\(\d+\)\s*", "", text)
     text = re.sub(r"^[（(]\d+[）)]\s*", "", text)
     text = re.sub(r"^\d+(?:\.\d+)*\s*", "", text)
+    return text.strip()
+
+
+def _strip_inline_markdown(text: str) -> str:
+    text = re.sub(r"`([^`]+)`", r"\1", text)
+    text = re.sub(r"\*\*([^*]+)\*\*", r"\1", text)
+    text = re.sub(r"__([^_]+)__", r"\1", text)
+    text = re.sub(r"\*([^*]+)\*", r"\1", text)
+    text = re.sub(r"_([^_]+)_", r"\1", text)
     return text.strip()
 
 
@@ -79,6 +89,7 @@ def _strip_generated_number_prefix(text: str) -> str:
 
 
 def _parse_caption_directive(text: str) -> Optional[Tuple[str, str]]:
+    text = _strip_inline_markdown(text)
     match = re.match(r"^(表题|图题)\s*[：:]\s*(.+)$", text)
     if match:
         caption_type = "table" if match.group(1) == "表题" else "image"
@@ -90,7 +101,7 @@ def _parse_image_markdown(text: str) -> Optional[Tuple[str, str]]:
     match = re.match(r"^!\[(.*?)\]\((.+?)\)\s*$", text)
     if not match:
         return None
-    caption = _strip_generated_number_prefix(match.group(1).strip())
+    caption = _strip_generated_number_prefix(_strip_inline_markdown(match.group(1).strip()))
     path = match.group(2).strip()
     if path.startswith("<") and path.endswith(">"):
         path = path[1:-1].strip()
@@ -152,6 +163,7 @@ def _section_key_from_heading(title: str) -> Optional[str]:
 
 
 def _extract_keywords(line: str) -> List[str]:
+    line = _strip_inline_markdown(line)
     parts = re.split(r"[：:]", line, maxsplit=1)
     value = parts[1] if len(parts) > 1 else ""
     if not value:
@@ -160,7 +172,7 @@ def _extract_keywords(line: str) -> List[str]:
 
 
 def parse_markdown(markdown_path: Path) -> PaperContent:
-    content = markdown_path.read_text(encoding="utf-8")
+    content = markdown_path.read_text(encoding="utf-8-sig")
     lines = content.splitlines()
 
     paper = PaperContent()
@@ -205,7 +217,7 @@ def parse_markdown(markdown_path: Path) -> PaperContent:
                 index += 1
                 continue
 
-            if level == 1 and special_key is not None:
+            if special_key is not None:
                 current_section = special_key
                 pending_table_caption = None
                 pending_image_caption = None
@@ -214,6 +226,8 @@ def parse_markdown(markdown_path: Path) -> PaperContent:
 
             current_section = "body"
             if level <= 3:
+                if first_h1_as_title and level > 1:
+                    first_h1_as_title = False
                 paper.body.append(Block(type="heading", level=level, text=title_text))
             else:
                 body_buffer.append(title_text)
@@ -223,33 +237,35 @@ def parse_markdown(markdown_path: Path) -> PaperContent:
             continue
 
         if current_section == "cn_abstract":
-            if re.match(r"^关键词\s*[：:]", stripped):
+            normalized = _strip_inline_markdown(stripped)
+            if re.match(r"^关键词\s*[：:]", normalized):
                 _flush_paragraph(paragraph_buffer, paper.cn_abstract)
-                paper.cn_keywords = _extract_keywords(stripped)
+                paper.cn_keywords = _extract_keywords(normalized)
             else:
-                paragraph_buffer.append(stripped)
+                paragraph_buffer.append(_strip_inline_markdown(stripped))
             index += 1
             continue
 
         if current_section == "en_abstract":
-            if re.match(r"^KEY\s*WORDS?\s*[：:]", stripped, flags=re.IGNORECASE):
+            normalized = _strip_inline_markdown(stripped)
+            if re.match(r"^KEY\s*WORDS?\s*[：:]", normalized, flags=re.IGNORECASE):
                 _flush_paragraph(paragraph_buffer, paper.en_abstract)
-                paper.en_keywords = _extract_keywords(stripped)
+                paper.en_keywords = _extract_keywords(normalized)
             else:
-                paragraph_buffer.append(stripped)
+                paragraph_buffer.append(_strip_inline_markdown(stripped))
             index += 1
             continue
 
         if current_section == "references":
             if re.match(r"^\[\d+\]", stripped):
-                paper.references.append(stripped)
+                paper.references.append(_strip_inline_markdown(stripped))
             elif stripped:
-                paper.references.append(stripped)
+                paper.references.append(_strip_inline_markdown(stripped))
             index += 1
             continue
 
         if current_section in {"acknowledgements", "appendix", "foreign_translation"}:
-            paragraph_buffer.append(stripped)
+            paragraph_buffer.append(_strip_inline_markdown(stripped))
             index += 1
             continue
 
@@ -293,7 +309,7 @@ def parse_markdown(markdown_path: Path) -> PaperContent:
             index = next_index
             continue
 
-        body_buffer.append(stripped)
+        body_buffer.append(_strip_inline_markdown(stripped))
         index += 1
 
     if current_section == "body":
